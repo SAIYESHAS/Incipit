@@ -49,27 +49,25 @@ export default function Library({ user, login }: { user: any, login: () => void 
         try {
           if (searchMode === 'bhavans') {
             console.log(`Fetching Bhavan's Collection...`);
-            const results = await searchBhavansBooks(30);
+            const results = await searchBhavansBooks(searchTerm, 50);
             if (isMounted) {
               setBhavansResults(results);
               setIsUsingAIFallback(true);
             }
           } else {
-            const finalQuery = searchTerm.trim().length > 0 ? searchTerm : 'popular fiction books';
+            const finalQuery = searchTerm.trim().length > 0 
+              ? searchTerm 
+              : 'trending bestsellers and popular classics across all genres globally';
             console.log(`Searching AI Global Hub for: ${finalQuery}`);
-            const results = await searchGlobalBooks(finalQuery, 30);
+            const results = await searchGlobalBooks(finalQuery, 50);
             if (isMounted) {
               setGlobalResults(results);
               setIsUsingAIFallback(true);
             }
           }
-        } catch (error: any) {
+        } catch (error) {
           console.error("Search error:", error);
           if (isMounted) {
-            const isQuotaError = error?.message?.includes('429') || error?.message?.includes('RESOURCE_EXHAUSTED') || error?.status === 429;
-            if (isQuotaError) {
-              setIsQuotaExceeded(true);
-            }
             const msg = error instanceof Error ? error.message : "Failed to connect to AI Hub.";
             setGlobalSearchError(msg);
           }
@@ -80,14 +78,14 @@ export default function Library({ user, login }: { user: any, login: () => void 
         }
       };
 
-      if (searchMode === 'global' && searchQuery.trim().length > 0) {
+      if (searchQuery.trim().length > 0) {
         const delayDebounceFn = setTimeout(() => fetchBooks(searchQuery), 500);
         return () => {
           isMounted = false;
           clearTimeout(delayDebounceFn);
         };
       } else {
-        fetchBooks(searchQuery);
+        fetchBooks("");
         return () => { isMounted = false; };
       }
     }
@@ -519,15 +517,13 @@ export default function Library({ user, login }: { user: any, login: () => void 
                 <p className="text-text-dim uppercase tracking-[2px] text-sm">No books found matching your search.</p>
               </div>
             )}
-            {(searchMode === 'global' || searchMode === 'bhavans') && globalSearchError && (
+            {searchMode === 'global' && globalSearchError && (
               <div className="col-span-full text-center py-20 border border-dashed border-red-500/30 bg-red-500/5">
                 <p className="text-red-400 uppercase tracking-[2px] text-sm mb-2">
-                  {isQuotaExceeded ? 'AI Quota Exceeded' : 'Connection Error'}
+                  Connection Error
                 </p>
                 <p className="text-text-dim text-xs max-w-md mx-auto">
-                  {isQuotaExceeded 
-                    ? "The shared AI search quota has been exhausted. Please try again later or configure your own Gemini API Key in the settings." 
-                    : globalSearchError}
+                  {globalSearchError}
                 </p>
                 <div className="flex flex-col sm:flex-row gap-4 justify-center mt-8">
                   <button 
@@ -536,11 +532,6 @@ export default function Library({ user, login }: { user: any, login: () => void 
                   >
                     Retry Connection
                   </button>
-                  {isQuotaExceeded && (
-                    <p className="text-[10px] text-red-400 italic flex items-center justify-center">
-                      Tip: You can use your own key for unlimited searches.
-                    </p>
-                  )}
                 </div>
               </div>
             )}

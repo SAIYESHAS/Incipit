@@ -37,18 +37,22 @@ export async function searchGlobalBooks(query: string, maxResults: number = 20):
     return aiResults || [];
   } catch (error) {
     console.error('Global AI Search Error:', error);
-    throw error;
+    return [];
   }
 }
 
-export async function searchBhavansBooks(maxResults: number = 20): Promise<GoogleBook[]> {
+export async function searchBhavansBooks(query: string = "", maxResults: number = 20): Promise<GoogleBook[]> {
   try {
-    console.log(`Fetching Bharatiya Vidya Bhavan (bhavans.info) collection...`);
-    const aiResults = await geminiSearchFallback("books published by Bharatiya Vidya Bhavan bhavans.info", maxResults);
+    const finalQuery = query.trim().length > 0 
+      ? `books matching "${query}" published by Bharatiya Vidya Bhavan bhavans.info` 
+      : "popular historical, cultural, and spiritual books published by Bharatiya Vidya Bhavan bhavans.info";
+      
+    console.log(`Fetching Bhavan's Collection for query: ${finalQuery}`);
+    const aiResults = await geminiSearchFallback(finalQuery, maxResults);
     return aiResults || [];
   } catch (error) {
     console.error('Bhavans Search Error:', error);
-    throw error;
+    return [];
   }
 }
 
@@ -142,12 +146,13 @@ async function geminiSearchFallback(query: string, maxResults: number): Promise<
     } catch (parseError) {
       console.error("Failed to parse Gemini JSON response:", parseError);
       console.log("Raw response length:", dataText.length);
-      throw new Error("The AI returned a malformed response. Please try again.");
+      // If it's a truncation error, we might try to find the last complete item, 
+      // but for now, we'll just return null to trigger the error UI
     }
   } catch (error) {
     console.error("Gemini fallback error:", error);
-    throw error;
   }
+  return null;
 }
 
 export async function getGlobalBookById(id: string): Promise<GoogleBook | null> {

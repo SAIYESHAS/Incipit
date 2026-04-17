@@ -45,18 +45,16 @@ export default function App() {
   }, []);
 
   const login = async () => {
-    if (isLoggingIn || user) return;
+    if (isLoggingIn) return;
     setIsLoggingIn(true);
     const provider = new GoogleAuthProvider();
     try {
       await signInWithPopup(auth, provider);
     } catch (error: any) {
-      // Common errors we can ignore or handle silently
-      const silentErrors = ['auth/popup-closed-by-user', 'auth/cancelled-popup-request', 'auth/popup-blocked'];
-      if (silentErrors.includes(error.code)) {
-        console.log("Login sequence interrupted by user.");
+      if (error.code === 'auth/popup-closed-by-user' || error.code === 'auth/cancelled-popup-request') {
+        console.log("Login popup closed or cancelled by user.");
       } else {
-        console.error("Login failed with error code:", error.code, error.message);
+        console.error("Login failed", error);
       }
     } finally {
       setIsLoggingIn(false);
