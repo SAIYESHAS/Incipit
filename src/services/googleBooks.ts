@@ -80,50 +80,33 @@ async function geminiSearchFallback(query: string, maxResults: number): Promise<
             items: {
               type: Type.ARRAY,
               items: {
-                type: Type.OBJECT,
-                properties: {
-                  id: { type: Type.STRING },
-                  volumeInfo: {
-                    type: Type.OBJECT,
-                    properties: {
-                      title: { type: Type.STRING },
-                      authors: { type: Type.ARRAY, items: { type: Type.STRING } },
-                      description: { type: Type.STRING },
-                      summary: { type: Type.STRING },
-                      audience: { type: Type.STRING },
-                      ageRating: { type: Type.STRING },
-                      categories: { type: Type.ARRAY, items: { type: Type.STRING } },
-                      industryIdentifiers: {
-                        type: Type.ARRAY,
-                        items: {
-                          type: Type.OBJECT,
-                          properties: {
-                            type: { type: Type.STRING },
-                            identifier: { type: Type.STRING }
-                          }
-                        }
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    });
+       async function geminiSearchFallback(query: string, maxResults: number): Promise<GoogleBook[] | null> {
+  const apiKey = process.env.GEMINI_API_KEY;
+  if (!apiKey) {
+    console.error("Gemini API key not configured for AI Hub");
+    return null;
+  }
 
-  // ... inside geminiSearchFallback ...
-    const dataText = response.text; // Note: Ensure this is calling the text correctly based on your SDK version
+  try {
+    const ai = new GoogleGenAI({ apiKey });
+    const model = ai.getGenerativeModel({ model: "gemini-1.5-flash" });
+
+    const prompt = `Search for real books matching the query: "${query}". 
+    Return a JSON object with an "items" array. 
+    Each item must have: id, volumeInfo { title, authors[], description, summary, audience, ageRating, industryIdentifiers[{type, identifier}] }. 
+    Return up to ${maxResults} items.`;
+
+    const result = await model.generateContent(prompt);
+    const response = await result.response;
+    const dataText = response.text(); // FIX: Added () to call the function
 
     try {
-      // FIX: Clean the string in case the AI added markdown backticks (```json)
+      // FIX: Removed spaces from regex /```json|```/g
       const cleanedJson = dataText.replace(/```json|```/g, "").trim();
       const data = JSON.parse(cleanedJson);
 
       if (data.items) {
         return data.items.map((item: any) => {
-          // ... your existing ISBN and coverUrl logic remains the same ...
           const isbn13 = item.volumeInfo.industryIdentifiers?.find((id: any) => id.type === 'ISBN_13')?.identifier;
           const isbn10 = item.volumeInfo.industryIdentifiers?.find((id: any) => id.type === 'ISBN_10')?.identifier;
           const isbn = isbn13 || isbn10;
@@ -144,37 +127,19 @@ async function geminiSearchFallback(query: string, maxResults: number): Promise<
         });
       }
     } catch (parseError) {
-      // FIX: Improved error logging for the "Unterminated string" error
-      console.error("JSON Parsing Error. Check if AI response was truncated:", parseError);
+      console.error("JSON Parsing Error. Raw response:", dataText);
       return []; 
     }
   } catch (error: any) {
-    // FIX: Catch the 429 Quota error here
     if (error.message?.includes("429") || error.status === "RESOURCE_EXHAUSTED") {
-      console.error("Gemini Quota Exceeded.");
+      console.error("Gemini Quota Exceeded. Try again in a minute.");
+    } else {
+      console.error("Gemini fallback error:", error);
     }
-    console.error("Gemini fallback error:", error);
-  }
-  return null;
-}
-            }
-          };
-        });
-      }
-    } catch (parseError) {
-      console.error("Failed to parse Gemini JSON response:", parseError);
-      console.log("Raw response length:", dataText.length);
-      // If it's a truncation error, we might try to find the last complete item, 
-      // but for now, we'll just return null to trigger the error UI
-    }
-  } catch (error) {
-    console.error("Gemini fallback error:", error);
   }
   return null;
 }
 
 export async function getGlobalBookById(id: string): Promise<GoogleBook | null> {
-  // Since we removed Google Books, we'll just return null or handle it as a local book
-  // In a real app, we might search the AI results again or store them
   return null;
 }
