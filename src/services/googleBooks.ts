@@ -37,7 +37,7 @@ export async function searchGlobalBooks(query: string, maxResults: number = 20):
     return aiResults || [];
   } catch (error) {
     console.error('Global AI Search Error:', error);
-    return [];
+    throw error;
   }
 }
 
@@ -48,7 +48,7 @@ export async function searchBhavansBooks(maxResults: number = 20): Promise<Googl
     return aiResults || [];
   } catch (error) {
     console.error('Bhavans Search Error:', error);
-    return [];
+    throw error;
   }
 }
 
@@ -80,31 +80,42 @@ async function geminiSearchFallback(query: string, maxResults: number): Promise<
             items: {
               type: Type.ARRAY,
               items: {
-       async function geminiSearchFallback(query: string, maxResults: number): Promise<GoogleBook[] | null> {
-  const apiKey = process.env.GEMINI_API_KEY;
-  if (!apiKey) {
-    console.error("Gemini API key not configured for AI Hub");
-    return null;
-  }
+                type: Type.OBJECT,
+                properties: {
+                  id: { type: Type.STRING },
+                  volumeInfo: {
+                    type: Type.OBJECT,
+                    properties: {
+                      title: { type: Type.STRING },
+                      authors: { type: Type.ARRAY, items: { type: Type.STRING } },
+                      description: { type: Type.STRING },
+                      summary: { type: Type.STRING },
+                      audience: { type: Type.STRING },
+                      ageRating: { type: Type.STRING },
+                      categories: { type: Type.ARRAY, items: { type: Type.STRING } },
+                      industryIdentifiers: {
+                        type: Type.ARRAY,
+                        items: {
+                          type: Type.OBJECT,
+                          properties: {
+                            type: { type: Type.STRING },
+                            identifier: { type: Type.STRING }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    });
 
-  try {
-    const ai = new GoogleGenAI({ apiKey });
-    const model = ai.getGenerativeModel({ model: "gemini-1.5-flash" });
-
-    const prompt = `Search for real books matching the query: "${query}". 
-    Return a JSON object with an "items" array. 
-    Each item must have: id, volumeInfo { title, authors[], description, summary, audience, ageRating, industryIdentifiers[{type, identifier}] }. 
-    Return up to ${maxResults} items.`;
-
-    const result = await model.generateContent(prompt);
-    const response = await result.response;
-    const dataText = response.text(); // FIX: Added () to call the function
-
+    const dataText = response.text;
     try {
-      // FIX: Removed spaces from regex /```json|```/g
-      const cleanedJson = dataText.replace(/```json|```/g, "").trim();
-      const data = JSON.parse(cleanedJson);
-
+      const data = JSON.parse(dataText);
       if (data.items) {
         return data.items.map((item: any) => {
           const isbn13 = item.volumeInfo.industryIdentifiers?.find((id: any) => id.type === 'ISBN_13')?.identifier;
@@ -121,25 +132,26 @@ async function geminiSearchFallback(query: string, maxResults: number): Promise<
             isAIGenerated: true,
             volumeInfo: {
               ...item.volumeInfo,
-              imageLinks: { thumbnail: coverUrl }
+              imageLinks: {
+                thumbnail: coverUrl
+              }
             }
           };
         });
       }
     } catch (parseError) {
-      console.error("JSON Parsing Error. Raw response:", dataText);
-      return []; 
+      console.error("Failed to parse Gemini JSON response:", parseError);
+      console.log("Raw response length:", dataText.length);
+      throw new Error("The AI returned a malformed response. Please try again.");
     }
-  } catch (error: any) {
-    if (error.message?.includes("429") || error.status === "RESOURCE_EXHAUSTED") {
-      console.error("Gemini Quota Exceeded. Try again in a minute.");
-    } else {
-      console.error("Gemini fallback error:", error);
-    }
+  } catch (error) {
+    console.error("Gemini fallback error:", error);
+    throw error;
   }
-  return null;
 }
 
 export async function getGlobalBookById(id: string): Promise<GoogleBook | null> {
+  // Since we removed Google Books, we'll just return null or handle it as a local book
+  // In a real app, we might search the AI results again or store them
   return null;
 }

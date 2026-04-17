@@ -63,9 +63,13 @@ export default function Library({ user, login }: { user: any, login: () => void 
               setIsUsingAIFallback(true);
             }
           }
-        } catch (error) {
+        } catch (error: any) {
           console.error("Search error:", error);
           if (isMounted) {
+            const isQuotaError = error?.message?.includes('429') || error?.message?.includes('RESOURCE_EXHAUSTED') || error?.status === 429;
+            if (isQuotaError) {
+              setIsQuotaExceeded(true);
+            }
             const msg = error instanceof Error ? error.message : "Failed to connect to AI Hub.";
             setGlobalSearchError(msg);
           }
@@ -515,13 +519,15 @@ export default function Library({ user, login }: { user: any, login: () => void 
                 <p className="text-text-dim uppercase tracking-[2px] text-sm">No books found matching your search.</p>
               </div>
             )}
-            {searchMode === 'global' && globalSearchError && (
+            {(searchMode === 'global' || searchMode === 'bhavans') && globalSearchError && (
               <div className="col-span-full text-center py-20 border border-dashed border-red-500/30 bg-red-500/5">
                 <p className="text-red-400 uppercase tracking-[2px] text-sm mb-2">
-                  Connection Error
+                  {isQuotaExceeded ? 'AI Quota Exceeded' : 'Connection Error'}
                 </p>
                 <p className="text-text-dim text-xs max-w-md mx-auto">
-                  {globalSearchError}
+                  {isQuotaExceeded 
+                    ? "The shared AI search quota has been exhausted. Please try again later or configure your own Gemini API Key in the settings." 
+                    : globalSearchError}
                 </p>
                 <div className="flex flex-col sm:flex-row gap-4 justify-center mt-8">
                   <button 
@@ -530,6 +536,11 @@ export default function Library({ user, login }: { user: any, login: () => void 
                   >
                     Retry Connection
                   </button>
+                  {isQuotaExceeded && (
+                    <p className="text-[10px] text-red-400 italic flex items-center justify-center">
+                      Tip: You can use your own key for unlimited searches.
+                    </p>
+                  )}
                 </div>
               </div>
             )}

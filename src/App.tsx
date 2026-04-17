@@ -43,21 +43,26 @@ export default function App() {
     });
     return () => unsubscribe();
   }, []);
-const login = async () => {
-    if (isLoggingIn) return;
+
+  const login = async () => {
+    if (isLoggingIn || user) return;
     setIsLoggingIn(true);
     const provider = new GoogleAuthProvider();
-    provider.setCustomParameters({ prompt: 'select_account' });
     try {
       await signInWithPopup(auth, provider);
     } catch (error: any) {
-      if (error.code !== 'auth/popup-closed-by-user') {
-        console.error("Login failed:", error);
+      // Common errors we can ignore or handle silently
+      const silentErrors = ['auth/popup-closed-by-user', 'auth/cancelled-popup-request', 'auth/popup-blocked'];
+      if (silentErrors.includes(error.code)) {
+        console.log("Login sequence interrupted by user.");
+      } else {
+        console.error("Login failed with error code:", error.code, error.message);
       }
     } finally {
       setIsLoggingIn(false);
     }
   };
+
   const navItems = [
     { id: 'home', label: 'Exploration', icon: BookOpen },
     { id: 'library', label: 'Books', icon: BookMarked },
