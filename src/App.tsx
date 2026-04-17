@@ -44,23 +44,20 @@ export default function App() {
     return () => unsubscribe();
   }, []);
 const login = async () => {
-  if (isLoggingIn) return;
-  setIsLoggingIn(true);
-  
-  const provider = new GoogleAuthProvider();
-  provider.setCustomParameters({ prompt: 'select_account' });
-
-  try {
-    await signInWithPopup(auth, provider);
-  } catch (error: any) {
-    if (error.code !== 'auth/popup-closed-by-user' && 
-        error.code !== 'auth/cancelled-popup-request') {
-      console.error("Login failed:", error);
+    if (isLoggingIn) return;
+    setIsLoggingIn(true);
+    const provider = new GoogleAuthProvider();
+    provider.setCustomParameters({ prompt: 'select_account' });
+    try {
+      await signInWithPopup(auth, provider);
+    } catch (error: any) {
+      if (error.code !== 'auth/popup-closed-by-user') {
+        console.error("Login failed:", error);
+      }
+    } finally {
+      setIsLoggingIn(false);
     }
-  } finally {
-    setIsLoggingIn(false);
-  }
-};
+  };
   const navItems = [
     { id: 'home', label: 'Exploration', icon: BookOpen },
     { id: 'library', label: 'Books', icon: BookMarked },
