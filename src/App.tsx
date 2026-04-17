@@ -45,21 +45,28 @@ export default function App() {
   }, []);
 
   const login = async () => {
-    if (isLoggingIn) return;
-    setIsLoggingIn(true);
-    const provider = new GoogleAuthProvider();
-    try {
-      await signInWithPopup(auth, provider);
-    } catch (error: any) {
-      if (error.code === 'auth/popup-closed-by-user' || error.code === 'auth/cancelled-popup-request') {
-        console.log("Login popup closed or cancelled by user.");
-      } else {
-        console.error("Login failed", error);
-      }
-    } finally {
-      setIsLoggingIn(false);
+  // 1. Prevent overlapping login attempts
+  if (isLoggingIn) return;
+  setIsLoggingIn(true);
+  
+  const provider = new GoogleAuthProvider();
+  // 2. Force the account picker to keep the popup stable
+  provider.setCustomParameters({ prompt: 'select_account' });
+
+  try {
+    await signInWithPopup(auth, provider);
+  } catch (error: any) {
+    // 3. Gracefully handle common user actions
+    if (error.code === 'auth/popup-closed-by-user' || 
+        error.code === 'auth/cancelled-popup-request') {
+      console.log("Login popup closed by user.");
+    } else {
+      console.error("Login failed:", error);
     }
-  };
+  } finally {
+    setIsLoggingIn(false);
+  }
+};
 
   const navItems = [
     { id: 'home', label: 'Exploration', icon: BookOpen },
