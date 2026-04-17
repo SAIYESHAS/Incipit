@@ -43,31 +43,24 @@ export default function App() {
     });
     return () => unsubscribe();
   }, []);
-
-  const login = async () => {
-  // 1. Prevent overlapping login attempts
+const login = async () => {
   if (isLoggingIn) return;
   setIsLoggingIn(true);
   
   const provider = new GoogleAuthProvider();
-  // 2. Force the account picker to keep the popup stable
   provider.setCustomParameters({ prompt: 'select_account' });
 
   try {
     await signInWithPopup(auth, provider);
   } catch (error: any) {
-    // 3. Gracefully handle common user actions
-    if (error.code === 'auth/popup-closed-by-user' || 
-        error.code === 'auth/cancelled-popup-request') {
-      console.log("Login popup closed by user.");
-    } else {
+    if (error.code !== 'auth/popup-closed-by-user' && 
+        error.code !== 'auth/cancelled-popup-request') {
       console.error("Login failed:", error);
     }
   } finally {
     setIsLoggingIn(false);
   }
 };
-
   const navItems = [
     { id: 'home', label: 'Exploration', icon: BookOpen },
     { id: 'library', label: 'Books', icon: BookMarked },
