@@ -113,11 +113,17 @@ async function geminiSearchFallback(query: string, maxResults: number): Promise<
       }
     });
 
-    const dataText = response.text;
+  // ... inside geminiSearchFallback ...
+    const dataText = response.text; // Note: Ensure this is calling the text correctly based on your SDK version
+
     try {
-      const data = JSON.parse(dataText);
+      // FIX: Clean the string in case the AI added markdown backticks (```json)
+      const cleanedJson = dataText.replace(/```json|```/g, "").trim();
+      const data = JSON.parse(cleanedJson);
+
       if (data.items) {
         return data.items.map((item: any) => {
+          // ... your existing ISBN and coverUrl logic remains the same ...
           const isbn13 = item.volumeInfo.industryIdentifiers?.find((id: any) => id.type === 'ISBN_13')?.identifier;
           const isbn10 = item.volumeInfo.industryIdentifiers?.find((id: any) => id.type === 'ISBN_10')?.identifier;
           const isbn = isbn13 || isbn10;
@@ -132,9 +138,25 @@ async function geminiSearchFallback(query: string, maxResults: number): Promise<
             isAIGenerated: true,
             volumeInfo: {
               ...item.volumeInfo,
-              imageLinks: {
-                thumbnail: coverUrl
-              }
+              imageLinks: { thumbnail: coverUrl }
+            }
+          };
+        });
+      }
+    } catch (parseError) {
+      // FIX: Improved error logging for the "Unterminated string" error
+      console.error("JSON Parsing Error. Check if AI response was truncated:", parseError);
+      return []; 
+    }
+  } catch (error: any) {
+    // FIX: Catch the 429 Quota error here
+    if (error.message?.includes("429") || error.status === "RESOURCE_EXHAUSTED") {
+      console.error("Gemini Quota Exceeded.");
+    }
+    console.error("Gemini fallback error:", error);
+  }
+  return null;
+}
             }
           };
         });
