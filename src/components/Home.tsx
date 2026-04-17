@@ -116,10 +116,9 @@ export default function Home({ onExplore }: HomeProps) {
                   <img 
                     src={book.coverUrl} 
                     alt={book.title}
-                    className="w-full h-full object-cover opacity-60 group-hover:opacity-80 group-hover:scale-105 transition-all duration-700"
+                    className="w-full h-full object-cover group-hover:scale-105 transition-all duration-700"
                     referrerPolicy="no-referrer"
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-bg to-transparent opacity-60" />
                 </div>
                 <div className="text-[10px] uppercase tracking-[2px] text-accent mb-2">{book.genre}</div>
                 <h4 className="text-xl font-serif mb-1 group-hover:text-accent transition-colors">{book.title}</h4>

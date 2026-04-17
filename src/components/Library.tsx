@@ -373,14 +373,13 @@ export default function Library({ user, login }: { user: any, login: () => void 
                     <img 
                       src={book.coverUrl} 
                       alt={book.title}
-                      className="w-full h-full object-cover opacity-70 group-hover:opacity-100 group-hover:scale-105 transition-all duration-700"
+                      className="w-full h-full object-cover group-hover:scale-105 transition-all duration-700"
                       referrerPolicy="no-referrer"
                       onError={(e) => {
                         const target = e.target as HTMLImageElement;
                         target.src = `https://picsum.photos/seed/${encodeURIComponent(book.title)}/400/600`;
                       }}
                     />
-                    <div className="absolute inset-0 bg-gradient-to-t from-surface to-transparent opacity-60" />
                     <div className="absolute top-4 right-4 flex flex-col gap-2 items-end">
                       <div className="text-[9px] px-2 py-1 bg-black/60 backdrop-blur-md border border-white/10 text-text-dim uppercase tracking-[1px]">
                         {book.ageRating}
@@ -422,14 +421,13 @@ export default function Library({ user, login }: { user: any, login: () => void 
                     <img 
                       src={gBook.volumeInfo.imageLinks?.thumbnail || `https://picsum.photos/seed/${encodeURIComponent(gBook.volumeInfo.title)}/400/600`} 
                       alt={gBook.volumeInfo.title}
-                      className="w-full h-full object-cover opacity-70 group-hover:opacity-100 group-hover:scale-105 transition-all duration-700"
+                      className="w-full h-full object-cover group-hover:scale-105 transition-all duration-700"
                       referrerPolicy="no-referrer"
                       onError={(e) => {
                         const target = e.target as HTMLImageElement;
                         target.src = `https://picsum.photos/seed/${encodeURIComponent(gBook.volumeInfo.title)}/400/600`;
                       }}
                     />
-                    <div className="absolute inset-0 bg-gradient-to-t from-surface to-transparent opacity-60" />
                     <div className="absolute top-4 right-4 flex flex-col gap-2 items-end">
                       <div className="text-[9px] px-2 py-1 bg-accent text-black font-bold uppercase tracking-[1px]">
                         Bhavan's
@@ -467,14 +465,13 @@ export default function Library({ user, login }: { user: any, login: () => void 
                     <img 
                       src={gBook.volumeInfo.imageLinks?.thumbnail || `https://picsum.photos/seed/${encodeURIComponent(gBook.volumeInfo.title)}/400/600`} 
                       alt={gBook.volumeInfo.title}
-                      className="w-full h-full object-cover opacity-70 group-hover:opacity-100 group-hover:scale-105 transition-all duration-700"
+                      className="w-full h-full object-cover group-hover:scale-105 transition-all duration-700"
                       referrerPolicy="no-referrer"
                       onError={(e) => {
                         const target = e.target as HTMLImageElement;
                         target.src = `https://picsum.photos/seed/${encodeURIComponent(gBook.volumeInfo.title)}/400/600`;
                       }}
                     />
-                    <div className="absolute inset-0 bg-gradient-to-t from-surface to-transparent opacity-60" />
                     <div className="absolute top-4 right-4 flex flex-col gap-2 items-end">
                       <div className="text-[9px] px-2 py-1 bg-accent text-black font-bold uppercase tracking-[1px]">
                         Global Hub
@@ -577,7 +574,7 @@ export default function Library({ user, login }: { user: any, login: () => void 
                 <img 
                   src={currentBook.coverUrl} 
                   alt={currentBook.title}
-                  className="w-full h-full object-cover opacity-80"
+                  className="w-full h-full object-cover"
                   referrerPolicy="no-referrer"
                   onError={(e) => {
                     const target = e.target as HTMLImageElement;
